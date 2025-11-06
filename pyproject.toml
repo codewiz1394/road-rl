@@ -1,0 +1,13 @@
+[project]
+name = "road-rl"           # PyPI name (hyphen OK)
+version = "0.0.1"
+description = "RoAd-RL - Robust Adversarial Reinforcement Learning"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+  { name = "Adithya Mohan" }
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
