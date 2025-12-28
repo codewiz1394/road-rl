@@ -1,12 +1,10 @@
 """
 RoAd-RL: Robust Adversarial Reinforcement Learning Library
 
-Core data structures shared across the entire framework.
-These types define what information flows between environments,
-policies, attacks, defenses, and evaluation code.
+Core data structures.
 
-The goal of this module is stability: these definitions should
-rarely change, even as the library grows.
+This module defines immutable data containers used to pass results
+between evaluation, logging, and metrics layers.
 """
 
 from __future__ import annotations
@@ -15,47 +13,43 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 
-@dataclass
-class StepContext:
-    """
-    Context available at a single environment step.
+# ---------------------------------------------------------------------
+# Episode-level result
+# ---------------------------------------------------------------------
 
-    This object is passed to attacks and defenses so they can
-    make decisions based on time, epsilon, or environment feedback.
-    """
-    step: int
-    episode: int
-    seed: int
-    epsilon: float
-    info: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
+@dataclass(frozen=True)
 class EpisodeResult:
     """
-    Result of executing a single episode under a fixed
-    attack/defense configuration.
+    Result of a single evaluation episode.
     """
     episode: int
     seed: int
     epsilon: float
-    total_return: float
+
+    return_: float
     length: int
+
     terminated: bool
     truncated: bool
+
     info: Dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass
+# ---------------------------------------------------------------------
+# Experiment-level result
+# ---------------------------------------------------------------------
+
+@dataclass(frozen=True)
 class ExperimentResult:
     """
-    Aggregated results from an evaluation sweep across
-    multiple episodes and epsilon values.
+    Aggregated result of an evaluation experiment.
     """
     env_id: str
     algorithm: str
+
     attack_name: Optional[str]
     defense_name: Optional[str]
-    epsilons: List[float]
-    episode_results: List[EpisodeResult]
+
+    episodes: List[EpisodeResult]
+
     metadata: Dict[str, Any] = field(default_factory=dict)
