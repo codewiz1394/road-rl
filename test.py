@@ -3,3 +3,4 @@ from road_rl.policies.base import Policy
 from road_rl.attacks.objectives import negative_log_prob_loss
 import torch
 from road_rl.attacks.constraints import project_linf
+from road_rl.attacks.fgsm import FGSMAttack
