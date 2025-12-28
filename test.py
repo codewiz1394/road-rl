@@ -5,4 +5,4 @@ import torch
 from road_rl.attacks.constraints import project_linf
 from road_rl.attacks.fgsm import FGSMAttack
 from road_rl.attacks.pgd import PGDAttack
-
+from road_rl.attacks.jsma import JSMAAttack
