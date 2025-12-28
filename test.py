@@ -7,4 +7,5 @@ from road_rl.attacks.fgsm import FGSMAttack
 from road_rl.attacks.pgd import PGDAttack
 from road_rl.attacks.jsma import JSMAAttack
 from road_rl.eval.episode_runner import run_episode
+from road_rl.eval.sweep_runner import run_sweep
 
