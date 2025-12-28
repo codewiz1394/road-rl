@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
+import importlib
 from typing import Any
 
 from road_rl.envs.make_env import EnvSpec, make_env_factory
@@ -23,14 +23,13 @@ from road_rl.io.plotting import (
     plot_violin_returns,
     plot_raw_rewards,
 )
+from road_rl.io.results import make_result_paths
 from road_rl.metrics.robustness import compute_metrics_from_csv
 from road_rl.attacks.fgsm import FGSMAttack
 from road_rl.attacks.pgd import PGDAttack
 from road_rl.attacks.jsma import JSMAAttack
 from road_rl.defenses.normalize_clip import NormalizeClipDefense
 from road_rl.policies.base import Policy
-
-import importlib
 
 
 # ---------------------------------------------------------------------
@@ -72,9 +71,10 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--attack-step-size", type=float, default=None)
     parser.add_argument("--jsma-top-k", type=int, default=1)
 
-    # Output
-    parser.add_argument("--out", required=True)
-    parser.add_argument("--prefix", default=None)
+    # Results / output
+    parser.add_argument("--out", required=True, help="Root results directory")
+    parser.add_argument("--experiment", required=True,
+                        help="User-defined experiment name (top-level folder)")
 
     # Plotting
     parser.add_argument("--sma-window", type=int, default=None)
@@ -145,8 +145,6 @@ def run(args: argparse.Namespace) -> None:
     """
     Execute the eval command.
     """
-    out_dir = Path(args.out)
-    out_dir.mkdir(parents=True, exist_ok=True)
 
     # Environment factory
     spec = EnvSpec(
@@ -184,44 +182,41 @@ def run(args: argparse.Namespace) -> None:
         },
     )
 
-    # Save experiment
-    save_experiment(result, out_dir, prefix=args.prefix)
+    # Construct result paths (THIS IS THE FIX)
+    paths = make_result_paths(
+        root_dir=args.out,
+        experiment_name=args.experiment,
+        env_id=args.env_id,
+        algorithm=args.algorithm,
+        attack=result.attack_name,
+        defense=result.defense_name,
+    )
 
-    # Derive CSV path (same naming logic as logger)
-    name_parts = [
-        args.env_id,
-        args.algorithm,
-        result.attack_name or "clean",
-        result.defense_name or "none",
-    ]
-    if args.prefix:
-        name_parts.insert(0, args.prefix)
-    base_name = "_".join(name_parts)
-    csv_path = out_dir / f"{base_name}_episodes.csv"
+    # Save raw experiment (episodes.csv + meta.json)
+    save_experiment(result, paths.run_dir)
 
     # Metrics
-    metrics = compute_metrics_from_csv(str(csv_path))
-    (out_dir / f"{base_name}_metrics.json").write_text(
-        json.dumps(metrics, indent=2)
-    )
+    metrics = compute_metrics_from_csv(str(paths.episodes_csv))
+    paths.metrics_json.write_text(json.dumps(metrics, indent=2))
 
     # Plots
     plot_return_vs_epsilon(
-        csv_files=[csv_path],
+        csv_files=[paths.episodes_csv],
         labels=[f"{args.attack}/{args.defense}"],
-        output_path=out_dir / f"{base_name}_return_vs_eps.pdf",
+        output_path=paths.return_vs_eps_pdf,
         sma_window=args.sma_window,
     )
 
     plot_violin_returns(
-        csv_files=[csv_path],
+        csv_files=[paths.episodes_csv],
         labels=[f"{args.attack}/{args.defense}"],
-        output_path=out_dir / f"{base_name}_violin.pdf",
+        output_path=paths.violin_pdf,
     )
 
     plot_raw_rewards(
-        csv_file=csv_path,
-        output_path=out_dir / f"{base_name}_raw_rewards.pdf",
+        csv_file=paths.episodes_csv,
+        output_path=paths.raw_rewards_pdf,
     )
 
-    print(f"[RoAd-RL] Evaluation complete. Results in {out_dir}")
+    print(f"[RoAd-RL] Evaluation complete.")
+    print(f"[RoAd-RL] Results written to: {paths.run_dir}")
