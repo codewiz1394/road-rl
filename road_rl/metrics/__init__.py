@@ -5,3 +5,8 @@ from .returns import (
     MeanReturnPerEpsilon,
     NormalizedReturnDrop,
 )
+from .risk import (
+    CVaRReturn,
+    CVaRReturnPerEpsilon,
+    WorstPercentileReturn,
+)
