@@ -14,7 +14,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from road_rl.core.types import StepContext
+from road_rl.core.context import StepContext
 from road_rl.policies.base import Policy, DifferentiablePolicy
 
 

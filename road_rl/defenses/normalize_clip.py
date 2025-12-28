@@ -18,7 +18,7 @@ from typing import Any, Optional
 import numpy as np
 import torch
 
-from road_rl.core.types import StepContext
+from road_rl.core.context import StepContext
 from road_rl.defenses.base import Defense
 
 

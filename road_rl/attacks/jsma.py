@@ -19,7 +19,7 @@ import torch
 
 from road_rl.attacks.base import GradientAttack
 from road_rl.attacks.constraints import project_linf, project_l2, clip_to_bounds
-from road_rl.core.types import StepContext
+from road_rl.core.context import StepContext
 from road_rl.policies.base import Policy
 
 

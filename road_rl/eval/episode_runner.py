@@ -14,7 +14,8 @@ from typing import Optional, Any
 
 import numpy as np
 
-from road_rl.core.types import StepContext, EpisodeResult
+from road_rl.core.context import StepContext
+from road_rl.core.types import EpisodeResult
 from road_rl.policies.base import Policy
 from road_rl.attacks.base import Attack
 from road_rl.defenses.base import Defense
