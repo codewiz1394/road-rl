@@ -17,8 +17,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# SciencePlots style
 import scienceplots  # noqa: F401
+
 
 # ------------------------------------------------------------
 # Global plotting style (paper-ready)
@@ -54,10 +54,16 @@ def simple_moving_average(y: np.ndarray, window: int) -> np.ndarray:
     return np.convolve(y, kernel, mode="same")
 
 
-def adaptive_sma(y: np.ndarray) -> np.ndarray:
-    n = len(y)
-    window = 50 if n < 500 else 100
-    return simple_moving_average(y, window)
+def resolve_sma_window(n_points: int, sma_window: Optional[int]) -> int:
+    """
+    Decide SMA window size.
+
+    If user provides a value, use it.
+    Otherwise fall back to adaptive default.
+    """
+    if sma_window is not None:
+        return int(sma_window)
+    return 50 if n_points < 500 else 100
 
 
 # ------------------------------------------------------------
@@ -70,13 +76,18 @@ def plot_return_vs_epsilon(
     output_path: str | Path,
     *,
     title: Optional[str] = None,
-    smooth: bool = True,
+    sma_window: Optional[int] = None,
 ) -> None:
     """
     Plot mean episodic return as a function of epsilon.
+
+    Parameters
+    ----------
+    sma_window:
+        Window size for simple moving average smoothing.
+        If None, an adaptive default is used.
     """
     ensure_dir(Path(output_path).parent)
-
     plt.figure()
 
     for csv_file, label in zip(csv_files, labels):
@@ -86,8 +97,8 @@ def plot_return_vs_epsilon(
         eps = grouped.mean().index.to_numpy()
         mean_return = grouped.mean().to_numpy()
 
-        if smooth:
-            mean_return = adaptive_sma(mean_return)
+        window = resolve_sma_window(len(mean_return), sma_window)
+        mean_return = simple_moving_average(mean_return, window)
 
         plt.plot(eps, mean_return, label=label)
 
@@ -106,7 +117,7 @@ def plot_return_vs_epsilon(
 
 
 # ------------------------------------------------------------
-# Plot 2: Bar chart (AUC or mean return)
+# Plot 2: Bar chart (AUC, mean return, etc.)
 # ------------------------------------------------------------
 
 def plot_bar_metric(
@@ -117,9 +128,6 @@ def plot_bar_metric(
     ylabel: str,
     title: Optional[str] = None,
 ) -> None:
-    """
-    Plot a bar chart for scalar robustness metrics (e.g. AUC).
-    """
     ensure_dir(Path(output_path).parent)
 
     x = np.arange(len(values))
@@ -140,7 +148,7 @@ def plot_bar_metric(
 
 
 # ------------------------------------------------------------
-# Plot 3: Violin plot (return distribution)
+# Plot 3: Violin plot (return distributions)
 # ------------------------------------------------------------
 
 def plot_violin_returns(
@@ -150,9 +158,6 @@ def plot_violin_returns(
     *,
     title: Optional[str] = None,
 ) -> None:
-    """
-    Plot violin distributions of episodic returns.
-    """
     ensure_dir(Path(output_path).parent)
 
     data = []
@@ -177,7 +182,7 @@ def plot_violin_returns(
 
 
 # ------------------------------------------------------------
-# Plot 4: Raw reward curve (episode index)
+# Plot 4: Raw episodic returns
 # ------------------------------------------------------------
 
 def plot_raw_rewards(
@@ -186,9 +191,6 @@ def plot_raw_rewards(
     *,
     title: Optional[str] = None,
 ) -> None:
-    """
-    Plot raw episodic returns without smoothing.
-    """
     ensure_dir(Path(output_path).parent)
 
     df = pd.read_csv(csv_file)
